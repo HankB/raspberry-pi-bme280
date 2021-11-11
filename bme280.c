@@ -77,7 +77,7 @@ int main()
   getRawData(fd, &raw);
 
   int32_t t_fine = getTemperatureCalibration(&cal, raw.temperature);
-  float t = compensateTemperature(t_fine);                        // C
+  float t = compensateTemperature(t_fine)*9.0/5.0 + 32.0;                        // C
   float p = compensatePressure(raw.pressure, &cal, t_fine) / 100; // hPa
   float h = compensateHumidity(raw.humidity, &cal, t_fine);       // %
 
