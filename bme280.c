@@ -56,6 +56,7 @@ https://github.com/adafruit/Adafruit_BME280_Library/blob/master/Adafruit_BME280.
 #include <math.h>
 #include <wiringPiI2C.h>
 #include "bme280.h"
+#include <unistd.h>
 
 int main()
 {
@@ -74,40 +75,24 @@ int main()
   wiringPiI2CWriteReg8(fd, 0xf4, 0x25); // pressure and temperature oversampling x 1, mode normal
 
   bme280_raw_data raw;
-  getRawData(fd, &raw);
+
+  do {
+    getRawData(fd, &raw);
+    if( raw.pmsb == 0xff )
+      usleep(10000);
+    else
+      break;
+  } while (1);
 
   int32_t t_fine = getTemperatureCalibration(&cal, raw.temperature);
   float t = compensateTemperature(t_fine)*9.0/5.0 + 32.0;                        // C
   float p = compensatePressure(raw.pressure, &cal, t_fine) / 100; // hPa
   float h = compensateHumidity(raw.humidity, &cal, t_fine);       // %
-/*
-typedef struct
-{
-   uint8_t pmsb;
-   uint8_t plsb;
-   uint8_t pxsb;
 
-   uint8_t tmsb;
-   uint8_t tlsb;
-   uint8_t txsb;
 
-   uint8_t hmsb;
-   uint8_t hlsb;
-
-   uint32_t temperature;
-   uint32_t pressure;
-   uint32_t humidity;
-
-} bme280_raw_data;
-*/
   printf("{\"t\":%d, \"humidity\":%.2f, \"pressure\":%.2f,"
-         " \"temperature\":%.2f, "
-	 "\"coeffs\":\"%hhx %hhx %hhx %hhx %hhx %hhx %hhx %hhx\""
-	 "}\n",
-         (int)time(NULL), h, p, t,
-	 raw.pmsb, raw.plsb, raw.pxsb,
-	 raw.tmsb, raw.tlsb, raw.txsb,
-	 raw.hmsb, raw.hlsb);
+         " \"temperature\":%.2f}\n",
+         (int)time(NULL), h, p, t);
 
   return 0;
 }
