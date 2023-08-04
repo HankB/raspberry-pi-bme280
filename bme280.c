@@ -92,7 +92,7 @@ int main()
   printf("{\"t\":%d, \"humid\":%.2f, \"press\":%.2f,"
          " \"temp\":%.2f, "
 	 "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\""
-	 "}\n",
+	 "}",
          (int)time(NULL), h, p, t,
 	 raw.pmsb, raw.plsb, raw.pxsb,
 	 raw.tmsb, raw.tlsb, raw.txsb,
