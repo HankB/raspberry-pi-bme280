@@ -80,10 +80,34 @@ int main()
   float t = compensateTemperature(t_fine)*9.0/5.0 + 32.0;                        // C
   float p = compensatePressure(raw.pressure, &cal, t_fine) / 100; // hPa
   float h = compensateHumidity(raw.humidity, &cal, t_fine);       // %
+/*
+typedef struct
+{
+   uint8_t pmsb;
+   uint8_t plsb;
+   uint8_t pxsb;
 
+   uint8_t tmsb;
+   uint8_t tlsb;
+   uint8_t txsb;
+
+   uint8_t hmsb;
+   uint8_t hlsb;
+
+   uint32_t temperature;
+   uint32_t pressure;
+   uint32_t humidity;
+
+} bme280_raw_data;
+*/
   printf("{\"t\":%d, \"humidity\":%.2f, \"pressure\":%.2f,"
-         " \"temperature\":%.2f}\n",
-         (int)time(NULL), h, p, t);
+         " \"temperature\":%.2f, "
+	 "\"coeffs\":\"%hhx %hhx %hhx %hhx %hhx %hhx %hhx %hhx\""
+	 "}\n",
+         (int)time(NULL), h, p, t,
+	 raw.pmsb, raw.plsb, raw.pxsb,
+	 raw.tmsb, raw.tlsb, raw.txsb,
+	 raw.hmsb, raw.hlsb);
 
   return 0;
 }
