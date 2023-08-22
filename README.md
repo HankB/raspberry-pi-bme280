@@ -33,3 +33,7 @@ Output should look like this
 ```
 {"sensor":"bme280", "humidity":54.36, "pressure":1011.89, "temperature":25.58, "altitude":9.23, "timestamp":1469568295}
 ```
+
+## Issues
+
+There are times when the readings are clearly in error. Often these are accompanied by recognizable patterns such as all bits set in some of the coefficients. Code has been added to retry the measurement when recognized and the coefficients are now included with the outpuyt (along with the trtry count.) The recognized bad readings are also reported to STDERR should further investigation be required.
