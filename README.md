@@ -36,4 +36,4 @@ Output should look like this
 
 ## Issues
 
-There are times when the readings are clearly in error. Often these are accompanied by recognizable patterns such as all bits set in some of the coefficients. Code has been added to retry the measurement when recognized and the coefficients are now included with the outpuyt (along with the trtry count.) The recognized bad readings are also reported to STDERR should further investigation be required.
+There are times when the readings are clearly in error. Often these are accompanied by recognizable patterns such as all bits set in some of the coefficients. Code has been added to retry the measurement when recognized and the coefficients are now included with the output (along with the retry count.) The recognized bad readings are also reported to STDERR should further investigation be required.
