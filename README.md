@@ -10,27 +10,42 @@ https://www.raspberrypi.org/downloads/raspbian/
 
 ```
 git clone https://github.com/andreiva/raspberry-pi-bme280.git
-
+git clone git@github.com:HankB/raspberry-pi-bme280.git # post fork
 ```
 
-Dependencies
-```
+### Dependencies
+
+```text
 sudo apt-get install libi2c-dev i2c-tools wiringpi
 ```
-Compiling
-```
+
+### Requirements
+
+Enable i2c using `raspi-config` or similar.
+
+### Compiling
+
+```text
 make
 ```
+
+### Usage
+
 Copy binary to /usr/bin
-```
+
+```text
 sudo cp bme280 /usr/bin
 ```
+
 Now you should be able to run the program, simply by typing
-```
+
+```text
 bme280
 ```
+
 Output should look like this
-```
+
+```text
 {"sensor":"bme280", "humidity":54.36, "pressure":1011.89, "temperature":25.58, "altitude":9.23, "timestamp":1469568295}
 ```
 
