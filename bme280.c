@@ -57,6 +57,7 @@ https://github.com/adafruit/Adafruit_BME280_Library/blob/master/Adafruit_BME280.
 #include <wiringPiI2C.h>
 #include "bme280.h"
 #include <unistd.h>
+#include <stdlib.h>
 
 int main()
 {
@@ -75,29 +76,20 @@ int main()
   wiringPiI2CWriteReg8(fd, 0xf4, 0x25); // pressure and temperature oversampling x 1, mode normal
 
   bme280_raw_data raw;
-  int   retries = 0;
 
-  do {
-    getRawData(fd, &raw);
-    if( (raw.pmsb == 0xff) ||
-        (raw.tmsb == 0xff && raw.tlsb == 0xff && raw.txsb == 0xff) ||
-        (raw.hmsb == 0xff && raw.hlsb == 0xff)) {
-      usleep(10000);
-      fprintf(stderr, "{\"t\":%d, "
-      "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\","
-      "\"retries\":%d"
-      "}",
-            (int)time(NULL),
-      raw.pmsb, raw.plsb, raw.pxsb,
-      raw.tmsb, raw.tlsb, raw.txsb,
-      raw.hmsb, raw.hlsb,
-      retries
-      );
-      retries++;
-    }
-    else
-      break;
-  } while (1);
+  getRawData(fd, &raw);
+  if( (raw.pmsb == 0xff) ||
+      (raw.tmsb == 0xff && raw.tlsb == 0xff && raw.txsb == 0xff) ||
+      (raw.hmsb == 0xff && raw.hlsb == 0xff)) {
+    fprintf(stderr, "{\"t\":%d, "
+    "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\"}",
+          (int)time(NULL),
+    raw.pmsb, raw.plsb, raw.pxsb,
+    raw.tmsb, raw.tlsb, raw.txsb,
+    raw.hmsb, raw.hlsb
+    );
+    exit(1);
+  }
 
   int32_t t_fine = getTemperatureCalibration(&cal, raw.temperature);
   float t = compensateTemperature(t_fine)*9.0/5.0 + 32.0;                        // C
@@ -107,14 +99,11 @@ int main()
   printf("{\"t\":%d, \"humid\":%.2f, \"press\":%.2f,"
          " \"temp\":%.2f, "
 	 "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\","
-   "\"retries\":%d"
 	 "}",
          (int)time(NULL), h, p, t,
 	 raw.pmsb, raw.plsb, raw.pxsb,
 	 raw.tmsb, raw.tlsb, raw.txsb,
-	 raw.hmsb, raw.hlsb,
-   retries
-   );
+	 raw.hmsb, raw.hlsb );
   return 0;
 }
 
