@@ -91,6 +91,13 @@ int main()
     exit(1);
   }
 
+  static const char* stored_file_name = "/tmp/BME280.txt";
+  static FILE  *stored_val = fopen(stored_file_name, "r+");    // file to store values
+  if(NULL == stored_val) {
+    exit(1);
+  }
+
+
   int32_t t_fine = getTemperatureCalibration(&cal, raw.temperature);
   float t = compensateTemperature(t_fine)*9.0/5.0 + 32.0;                        // C
   float p = compensatePressure(raw.pressure, &cal, t_fine) / 100; // hPa
@@ -98,8 +105,7 @@ int main()
 
   printf("{\"t\":%d, \"humid\":%.2f, \"press\":%.2f,"
          " \"temp\":%.2f, "
-	 "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\","
-	 "}",
+	 "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\"}",
          (int)time(NULL), h, p, t,
 	 raw.pmsb, raw.plsb, raw.pxsb,
 	 raw.tmsb, raw.tlsb, raw.txsb,
