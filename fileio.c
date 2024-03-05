@@ -46,9 +46,9 @@ int put_vals(const char *filename, float v1, float v2, float v3, unsigned int co
     }
     int rc = fprintf(f, "%f %f %f %u\n", v1, v2, v3, count);
     perror("post fprintf");
-    printf("put_vals() %d chars written\n", rc);
+    fprintf(stderr, "put_vals() %d chars written\n", rc);
     rc = fclose(f);
     perror("post fclose");
-    printf("fclose() %d, errno %d\n", rc, errno);
+    fprintf(stderr, "fclose() %d, errno %d\n", rc, errno);
     return errno;
 }
