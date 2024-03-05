@@ -59,6 +59,28 @@ https://github.com/adafruit/Adafruit_BME280_Library/blob/master/Adafruit_BME280.
 #include <unistd.h>
 #include <stdlib.h>
 
+#include "fileio.h"
+
+typedef enum
+{
+  ALL_GOOD = 0,
+  ALL_BITS_SET,
+  INSANE_VALUE,
+  EXCESS_DEVIATION,
+} reason;
+
+void dump_vals(bme280_raw_data *raw, float temperature, float humidity, float pressure, int count, reason r)
+{
+  fprintf(stderr, "%d, "
+                  "%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx"
+                  "%f %f %f %d %d",
+          (int)time(NULL),
+          raw->pmsb, raw->plsb, raw->pxsb,
+          raw->tmsb, raw->tlsb, raw->txsb,
+          raw->hmsb, raw->hlsb,
+          temperature, pressure, humidity, count, r);
+}
+
 int main()
 {
 
@@ -78,38 +100,39 @@ int main()
   bme280_raw_data raw;
 
   getRawData(fd, &raw);
-  if( (raw.pmsb == 0xff) ||
+  if ((raw.pmsb == 0xff) ||
       (raw.tmsb == 0xff && raw.tlsb == 0xff && raw.txsb == 0xff) ||
-      (raw.hmsb == 0xff && raw.hlsb == 0xff)) {
-    fprintf(stderr, "{\"t\":%d, "
-    "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\"}",
-          (int)time(NULL),
-    raw.pmsb, raw.plsb, raw.pxsb,
-    raw.tmsb, raw.tlsb, raw.txsb,
-    raw.hmsb, raw.hlsb
-    );
+      (raw.hmsb == 0xff && raw.hlsb == 0xff))
+  {
+    dump_vals(&raw, 0.0, 0.0, 0.0, 0, ALL_BITS_SET);
     exit(1);
   }
 
-  static const char* stored_file_name = "/tmp/BME280.txt";
-  static FILE  *stored_val = fopen(stored_file_name, "r+");    // file to store values
-  if(NULL == stored_val) {
-    exit(1);
-  }
+  static const char *stored_file_name = "/tmp/BME280.txt";
+  float temperature = 0, humidity = 0.0, pressure = 0.0;
+  unsigned int count = 0;
 
+  int rc = get_vals(stored_file_name, &temperature, &humidity, &pressure, &count);
 
   int32_t t_fine = getTemperatureCalibration(&cal, raw.temperature);
-  float t = compensateTemperature(t_fine)*9.0/5.0 + 32.0;                        // C
+  float t = compensateTemperature(t_fine) * 9.0 / 5.0 + 32.0;     // C
   float p = compensatePressure(raw.pressure, &cal, t_fine) / 100; // hPa
   float h = compensateHumidity(raw.humidity, &cal, t_fine);       // %
 
+  if( rc != 0) {  // no stored values?
+    rc = put_vals(stored_file_name, t, p, h, count);
+    exit(0);
+  }
+  
+  rc = put_vals(stored_file_name, t, p, h, count);
+
   printf("{\"t\":%d, \"humid\":%.2f, \"press\":%.2f,"
          " \"temp\":%.2f, "
-	 "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\"}",
+         "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\"}",
          (int)time(NULL), h, p, t,
-	 raw.pmsb, raw.plsb, raw.pxsb,
-	 raw.tmsb, raw.tlsb, raw.txsb,
-	 raw.hmsb, raw.hlsb );
+         raw.pmsb, raw.plsb, raw.pxsb,
+         raw.tmsb, raw.tlsb, raw.txsb,
+         raw.hmsb, raw.hlsb);
   return 0;
 }
 
