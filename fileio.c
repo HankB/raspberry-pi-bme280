@@ -3,6 +3,8 @@
 
 #include "fileio.h"
 
+// https://en.cppreference.com/w/c/io
+
 /* open file to read values
     0 == success
     -1 == can't read three values
@@ -45,10 +47,16 @@ int put_vals(const char *filename, float v1, float v2, float v3, unsigned int co
         return errno;
     }
     int rc = fprintf(f, "%f %f %f %u\n", v1, v2, v3, count);
-    perror("post fprintf");
-    fprintf(stderr, "put_vals() %d chars written\n", rc);
+    if (errno != 0)
+    {
+        perror("post fprintf");
+        fprintf(stderr, "put_vals() %d chars written\n", rc);
+    }
     rc = fclose(f);
-    perror("post fclose");
-    fprintf(stderr, "fclose() %d, errno %d\n", rc, errno);
+    if (errno != 0)
+    {
+        perror("post fclose");
+        fprintf(stderr, "fclose() %d, errno %d\n", rc, errno);
+    }
     return errno;
 }
