@@ -67,13 +67,15 @@ typedef enum
   ALL_BITS_SET,
   INSANE_VALUE,
   EXCESS_DEVIATION,
+  UNDETERMINED,
+  FIRST_PASS,
 } reason;
 
 void dump_vals(bme280_raw_data *raw, float temperature, float humidity, float pressure, int count, reason r)
 {
   fprintf(stderr, "%d, "
                   "%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx"
-                  "%f %f %f %d %d",
+                  "%f %f %f %d %d\n",
           (int)time(NULL),
           raw->pmsb, raw->plsb, raw->pxsb,
           raw->tmsb, raw->tlsb, raw->txsb,
@@ -119,11 +121,14 @@ int main()
   float p = compensatePressure(raw.pressure, &cal, t_fine) / 100; // hPa
   float h = compensateHumidity(raw.humidity, &cal, t_fine);       // %
 
-  if( rc != 0) {  // no stored values?
+  if (rc != 0)
+  { // no stored values?
+    dump_vals(&raw, t, h, p, count, FIRST_PASS);
     rc = put_vals(stored_file_name, t, p, h, count);
     exit(0);
   }
-  
+
+  dump_vals(&raw, t, h, p, count, FIRST_PASS);
   rc = put_vals(stored_file_name, t, p, h, count);
 
   printf("{\"t\":%d, \"humid\":%.2f, \"press\":%.2f,"
