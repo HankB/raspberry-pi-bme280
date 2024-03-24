@@ -74,7 +74,7 @@ typedef enum
 void dump_vals(bme280_raw_data *raw, float temperature, float humidity, float pressure, int count, reason r)
 {
   fprintf(stderr, "%d, "
-                  "%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx"
+                  "%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx "
                   "%f %f %f %d %d\n",
           (int)time(NULL),
           raw->pmsb, raw->plsb, raw->pxsb,
@@ -128,7 +128,7 @@ int main()
     exit(0);
   }
 
-  dump_vals(&raw, t, h, p, count, FIRST_PASS);
+  dump_vals(&raw, t, h, p, count, UNDETERMINED);
   rc = put_vals(stored_file_name, t, p, h, count);
 
   printf("{\"t\":%d, \"humid\":%.2f, \"press\":%.2f,"
