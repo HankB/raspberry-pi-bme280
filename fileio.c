@@ -17,7 +17,8 @@ int get_vals(const char *filename, float *v1, float *v2, float *v3, unsigned int
 
     if (0 == f)
     {
-        perror("Can't open file for reading");
+        if (ENOENT != errno)
+            perror("Can't open file for reading");
         return errno;
     }
 
@@ -47,13 +48,13 @@ int put_vals(const char *filename, float v1, float v2, float v3, unsigned int co
         return errno;
     }
     int rc = fprintf(f, "%f %f %f %u\n", v1, v2, v3, count);
-    if (errno != 0)
+    if (rc < 0 && errno != 0)
     {
-        perror("post fprintf");
-        fprintf(stderr, "put_vals() %d chars written\n", rc);
+        perror("fprintf()");
+        fprintf(stderr, "put_vals() %d chars written, errno %d\n", rc, errno);
     }
     rc = fclose(f);
-    if (errno != 0)
+    if (rc != 0 && errno != 0)
     {
         perror("post fclose");
         fprintf(stderr, "fclose() %d, errno %d\n", rc, errno);
