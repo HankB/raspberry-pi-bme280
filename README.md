@@ -66,3 +66,58 @@ Bad readings continue to cause problems. Some additional logic is being added an
     * In other circumstances, if the values are close enough to the previous values, they will be recorded and reported. This might cause a string of bad values to be reported and also the first good falue following a bad value will not be reported.
 
 One big change here is to not perform retries. Depending on the impact of this change, that decision may need to be revisited.
+
+## 2024-03-27 testing
+
+Has been running minute by minute from `cron` on `sodus` using
+
+```text
+* * * * * /home/hbarta/bin/bme280 2>>/home/hbarta/Downloads/temp_humidity.txt | /bin/mosquitto_pub -s -t "HA/$(/bin/hostname)/master_bedroom/temp_humidity" -h mqtt>>/tmp/temp_humidity_cron.txt 2>&1
+```
+
+Found in `/home/hbarta/Downloads/temp_humidity.txt` - need to look at that code and ID the entry in MQTT capture
+
+```text
+1711547341, 5c 0d 00 7b d6 00 5d cd 68.792000 991.538574 38.265625 0 4
+Can't open file for reading: No such file or directory
+1711547402, 80 00 00 80 00 00 80 00 78.584000 748.081970 89.565430 0 5
+post fprintf: Invalid argument
+put_vals() 33 chars written
+post fclose: Invalid argument
+fclose() 0, errno 22
+1711547578, 5c 4d 00 7c c5 00 5d 02 70.987999 991.580261 37.070312 0 4
+```
+
+These errors may have been produced during the first execution following reboot - yes, confirmed.
+
+```text
+HA/sodus/master_bedroom/temp_humidity {"t":1711547341, "humid":38.27, "press":991.54, "temp":68.79, "coeffs":"5c 0d 00 7b d6 00 5d cd"}
+...
+HA/sodus/master_bedroom/temp_humidity {"t":1711547578, "humid":37.07, "press":991.58, "temp":70.99, "coeffs":"5c 4d 00 7c c5 00 5d 02"}
+HA/sodus/master_bedroom/temp_humidity {"t":1711547579, "humid":37.59, "press":991.60, "temp":71.53, "coeffs":"5c 5c 00 7c ff 00 5d 5a"}
+HA/sodus/master_bedroom/temp_humidity {"t":1711547581, "humid":37.34, "press":991.70, "temp":71.58, "coeffs":"5c 5a 00 7d 05 00 5d 32"}
+```
+
+That search was not fruitful. But looking at otheMWTT messages I find
+
+```text
+HA/sodus/master_bedroom/temp_humidity {"t":1711232101, "humid":32.15, "press":999.35, "temp":73.63, "coeffs":"5b 7f 00 7d e6 00 59 c0"}
+HA/sodus/master_bedroom/temp_humidity {"t":1711232221, "humid":0.00, "press":642.60, "temp":32.00, "coeffs":"5b 80 00 7d eb 00 59 cf"}
+HA/sodus/master_bedroom/temp_humidity {"t":1711232281, "humid":32.01, "press":999.32, "temp":73.80, "coeffs":"5b 85 00 7d f7 00 59 a8"}
+...
+HA/sodus/master_bedroom/temp_humidity {"t":1711233001, "humid":31.99, "press":999.52, "temp":73.85, "coeffs":"5b 7f 00 7d fc 00 59 a5"}
+HA/sodus/master_bedroom/temp_humidity {"t":1711233302, "humid":28.09, "press":739.89, "temp":-272.87, "coeffs":"5b 81 00 7e 04 00 59 73"}
+HA/sodus/master_bedroom/temp_humidity {"t":1711233361, "humid":31.52, "press":999.87, "temp":73.87, "coeffs":"5b 73 00 7d ff 00 59 55"}
+...
+HA/sodus/master_bedroom/temp_humidity {"t":1711503302, "humid":42.22, "press":982.11, "temp":67.95, "coeffs":"5d 4f 00 7b 7a 00 60 74"}
+HA/sodus/master_bedroom/temp_humidity {"t":1711503361, "humid":42.06, "press":953.70, "temp":32.31, "coeffs":"5d 49 00 7b 77 00 60 72"}
+HA/sodus/master_bedroom/temp_humidity {"t":1711503421, "humid":42.38, "press":982.06, "temp":67.78, "coeffs":"5d 4c 00 7b 68 00 60 8f"}
+```
+
+Sanity checks that come out of this are
+
+* humidity == 0.0
+* delta pressure > 100
+* delta temperature > 20
+
+Pressure and temperature tests implemented at present.
