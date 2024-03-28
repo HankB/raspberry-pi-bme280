@@ -71,7 +71,7 @@ typedef enum
   FIRST_PASS,
 } reason;
 
-void dump_vals(bme280_raw_data *raw, float temperature, float humidity, float pressure, int count, reason r)
+void dump_vals(bme280_raw_data *raw, float temperature, float pressure, float humidity, int count, reason r)
 {
   fprintf(stderr, "%d, "
                   "%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx "
@@ -114,7 +114,7 @@ int main()
   float temperature = 0, humidity = 0.0, pressure = 0.0;
   unsigned int count = 0;
 
-  int rc = get_vals(stored_file_name, &temperature, &humidity, &pressure, &count);
+  int rc = get_vals(stored_file_name, &temperature, &pressure, &humidity, &count);
 
   int32_t t_fine = getTemperatureCalibration(&cal, raw.temperature);
   float t = compensateTemperature(t_fine) * 9.0 / 5.0 + 32.0;     // C
@@ -123,21 +123,36 @@ int main()
 
   if (rc != 0)
   { // no stored values?
-    dump_vals(&raw, t, h, p, count, FIRST_PASS);
+    dump_vals(&raw, t, p, h, count, FIRST_PASS);
     rc = put_vals(stored_file_name, t, p, h, count);
     exit(0);
   }
 
-  dump_vals(&raw, t, h, p, count, UNDETERMINED);
   rc = put_vals(stored_file_name, t, p, h, count);
 
-  printf("{\"t\":%d, \"humid\":%.2f, \"press\":%.2f,"
-         " \"temp\":%.2f, "
-         "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\"}",
-         (int)time(NULL), h, p, t,
-         raw.pmsb, raw.plsb, raw.pxsb,
-         raw.tmsb, raw.tlsb, raw.txsb,
-         raw.hmsb, raw.hlsb);
+  /* Check for "insane" readings
+
+  * delta pressure > 100
+  * delta temperature > 20
+  */
+
+  if ((fabs(p - pressure) > 100) ||
+      (fabs(t - temperature) > 20))
+  {
+    dump_vals(&raw, t, p, h, count, EXCESS_DEVIATION);
+  }
+  else
+  {
+    dump_vals(&raw, t, p, h, count, ALL_GOOD);
+    printf("{\"t\":%d, \"humid\":%.2f, \"press\":%.2f,"
+           " \"temp\":%.2f, "
+           "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\"}",
+           (int)time(NULL), h, p, t,
+           raw.pmsb, raw.plsb, raw.pxsb,
+           raw.tmsb, raw.tlsb, raw.txsb,
+           raw.hmsb, raw.hlsb);
+  }
+
   return 0;
 }
 
