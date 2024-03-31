@@ -145,7 +145,7 @@ int main()
   {
     dump_vals(&raw, t, p, h, count, ALL_GOOD);
     printf("{\"t\":%d, \"humid\":%.2f, \"press\":%.2f,"
-           " \"temp\":%.2f, "
+           " \"temp\":%.2f, \"device\": \"BME280\", "
            "\"coeffs\":\"%2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx %2.2hhx\"}",
            (int)time(NULL), h, p, t,
            raw.pmsb, raw.plsb, raw.pxsb,
